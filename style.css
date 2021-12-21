@@ -30,3 +30,12 @@
       min-height: 35px;
       text-align: center;
   }
+
+  .modal-cart {
+      display: flex;
+      flex-direction: column;
+  }
+
+  .modal-item {
+      text-align: left;
+  }
