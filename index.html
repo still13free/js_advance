@@ -4,11 +4,24 @@
 <head>
   <title>eShop</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="modal.css">
+  <script src="modal.js"></script>
 </head>
 
 <body>
   <div class="header">
-    <button class="cart-button" type="button">Корзина</button>
+    <button class="cart-button" id="show-cart" type="button">Корзина</button>
+
+    <script>
+      var modalcart = $modal({
+        title: 'Корзина',
+        content: '<div class="modal-cart"></div>',
+      });
+      document.querySelector('#show-cart').addEventListener('click', function (e) {
+        modalcart.show();
+      });
+    </script>
+    <!-- Честно украдено отсюда: https://github.com/itchief/ui-components/tree/master/Modal -->
   </div>
 
   <div class="main">
