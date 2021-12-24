@@ -1,3 +1,36 @@
+const API_URL = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-store-api/master/responses';
+
+function send(onError, onSuccess, url, method = 'GET', data = '', headers = {}, timeout = 60000) {
+
+  let xhr;
+
+  if (window.XMLHttpRequest) {
+    // Chrome, Mozilla, Opera, Safari
+    xhr = new XMLHttpRequest();
+  } else if (window.ActiveXObject) {
+    // Internet Explorer
+    xhr = new ActiveXObject("Microsoft.XMLHTTP");
+  }
+
+  for ([key, value] of Object.entries(headers)) {
+    xhr.setRequestHeader(key, value)
+  }
+
+  xhr.timeout = timeout;
+  xhr.ontimeout = onError;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+      if (xhr.status < 400) {
+        onSuccess(xhr.responseText)
+      } else if (xhr.status >= 400) {
+        onError(xhr.status)
+      }
+    }
+  }
+  xhr.open(method, url, true);
+  xhr.send(data);
+}
+
 function getCounter() {
   let last = 0;
   return () => ++last;
@@ -22,7 +55,7 @@ class Good {
     return this.title;
   }
   render() {
-    return `<div class="goods-item"><h3>${this.title}</h3><p>${this.price}</p></div>`;
+    return `<div class="goods-item"><h3>${this.title}</h3><p>${this.price} руб.</p></div>`;
   }
 }
 
@@ -60,23 +93,51 @@ class Cart {
     this.list = []
   }
 
+  _onError(err) {
+    console.log(0);
+  }
+
   add(good) {
-    const idx = this.list.findIndex((stack) => stack.getGoodId() == good.id)
-    if (idx >= 0) {
-      this.list[idx].add()
-    } else {
-      this.list.push(new GoodStack(good))
-    }
+    send(
+      this._onError,
+      (response) => {
+        const data = JSON.parse(response);
+        if (data.result) {
+          const idx = this.list.findIndex((stack) => stack.getGoodId() == good.id)
+          if (idx >= 0) {
+            this.list[idx].add()
+          } else {
+            this.list.push(new GoodStack(good))
+          }
+        }
+      },
+      `${API_URL}/addToBasket.json`)
+    setTimeout(() => {
+      cart.render()
+    }, 500);
   }
+
   remove(id) {
-    const idx = this.list.findIndex((stack) => stack.getGoodId() == id)
-    if (idx >= 0) {
-      this.list[idx].remove()
-      if (this.list[idx].getCount() <= 0) {
-        this.list.splice(idx, 1)
-      }
-    }
+    send(
+      this._onError,
+      (response) => {
+        const data = JSON.parse(response);
+        if (data.result) {
+          const idx = this.list.findIndex((stack) => stack.getGoodId() == id)
+          if (idx >= 0) {
+            this.list[idx].remove()
+            if (this.list[idx].getCount() <= 0) {
+              this.list.splice(idx, 1)
+            }
+          }
+        }
+      },
+      `${API_URL}/deleteFromBasket.json`)
+    setTimeout(() => {
+      cart.render()
+    }, 500);
   }
+
   render() {
     let listHtml = '';
     this.list.forEach(goodStack => listHtml += goodStack.render());
@@ -90,19 +151,43 @@ class Showcase {
     this.cart = cart;
   }
 
-  fetchGoods() {
-    this.list = [
-      new Good({ id: 1, title: 'Футболка', price: 140 }),
-      new Good({ id: 2, title: 'Брюки', price: 320 }),
-      new Good({ id: 3, title: 'Галстук', price: 24 })
-    ]
+  _onSuccess(response) {
+    const data = JSON.parse(response)
+    data.forEach(product => {
+      this.list.push(
+        new Good({ id: product.id_product, title: product.product_name, price: product.price })
+      )
+    });
   }
+
+  _onSuccessCart(response) {
+    const data = JSON.parse(response)
+    data.contents.forEach(product => {
+      for (let i = 0; i < product.quantity; i++) {
+        this.addToCart(product.id_product)
+      }
+    });
+  }
+
+  _onError(err) {
+    console.log(err);
+  }
+
+  fetchGoods() {
+    send(this._onError, this._onSuccess.bind(this), `${API_URL}/catalogData.json`)
+  }
+
+  fetchCart() {
+    send(this._onError, this._onSuccessCart.bind(this), `${API_URL}/getBasket.json`)
+  }
+
   addToCart(id) {
     const idx = this.list.findIndex((good) => id == good.id)
     if (idx >= 0) {
       this.cart.add(this.list[idx])
     }
   }
+
   render() {
     let listHtml = '';
     this.list.forEach(goodItem => listHtml += goodItem.render());
@@ -115,12 +200,24 @@ const showcase = new Showcase(cart);
 
 showcase.fetchGoods();
 
-showcase.addToCart(1);
-showcase.addToCart(1);
-showcase.addToCart(1);
-showcase.addToCart(3);
+setTimeout(() => {
+  showcase.fetchCart()
+}, 500);
 
-cart.remove(1);
+setTimeout(() => {
+  showcase.render()
+}, 1000);
 
-showcase.render()
-cart.render()
+// немного тестов
+setTimeout(() => {
+  showcase.addToCart(123)
+}, 2000);
+setTimeout(() => {
+  showcase.addToCart(123)
+}, 3000);
+setTimeout(() => {
+  showcase.addToCart(456)
+}, 4000);
+setTimeout(() => {
+  cart.remove(456)
+}, 5000);
