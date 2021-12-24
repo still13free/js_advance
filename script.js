@@ -93,22 +93,49 @@ class Cart {
     this.list = []
   }
 
-  add(good) {
-    const idx = this.list.findIndex((stack) => stack.getGoodId() == good.id)
-    if (idx >= 0) {
-      this.list[idx].add()
-    } else {
-      this.list.push(new GoodStack(good))
-    }
+  _onError(err) {
+    console.log(0);
   }
+
+  add(good) {
+    send(
+      this._onError,
+      (response) => {
+        const data = JSON.parse(response);
+        if (data.result) {
+          const idx = this.list.findIndex((stack) => stack.getGoodId() == good.id)
+          if (idx >= 0) {
+            this.list[idx].add()
+          } else {
+            this.list.push(new GoodStack(good))
+          }
+        }
+      },
+      `${API_URL}/addToBasket.json`)
+    setTimeout(() => {
+      cart.render()
+    }, 500);
+  }
+
   remove(id) {
-    const idx = this.list.findIndex((stack) => stack.getGoodId() == id)
-    if (idx >= 0) {
-      this.list[idx].remove()
-      if (this.list[idx].getCount() <= 0) {
-        this.list.splice(idx, 1)
-      }
-    }
+    send(
+      this._onError,
+      (response) => {
+        const data = JSON.parse(response);
+        if (data.result) {
+          const idx = this.list.findIndex((stack) => stack.getGoodId() == id)
+          if (idx >= 0) {
+            this.list[idx].remove()
+            if (this.list[idx].getCount() <= 0) {
+              this.list.splice(idx, 1)
+            }
+          }
+        }
+      },
+      `${API_URL}/deleteFromBasket.json`)
+    setTimeout(() => {
+      cart.render()
+    }, 500);
   }
 
   render() {
@@ -172,16 +199,25 @@ const cart = new Cart();
 const showcase = new Showcase(cart);
 
 showcase.fetchGoods();
-showcase.fetchCart();
 
 setTimeout(() => {
-  // showcase.addToCart(123)
-  // showcase.addToCart(123)
-  // showcase.addToCart(123)
-  // showcase.addToCart(456)
+  showcase.fetchCart()
+}, 500);
 
-  // cart.remove(123)
-
+setTimeout(() => {
   showcase.render()
-  cart.render()
-}, 1000)
+}, 1000);
+
+// немного тестов
+setTimeout(() => {
+  showcase.addToCart(123)
+}, 2000);
+setTimeout(() => {
+  showcase.addToCart(123)
+}, 3000);
+setTimeout(() => {
+  showcase.addToCart(456)
+}, 4000);
+setTimeout(() => {
+  cart.remove(456)
+}, 5000);
