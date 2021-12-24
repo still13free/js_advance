@@ -1,3 +1,36 @@
+const API_URL = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-store-api/master/responses';
+
+function send(onError, onSuccess, url, method = 'GET', data = '', headers = {}, timeout = 60000) {
+
+  let xhr;
+
+  if (window.XMLHttpRequest) {
+    // Chrome, Mozilla, Opera, Safari
+    xhr = new XMLHttpRequest();
+  } else if (window.ActiveXObject) {
+    // Internet Explorer
+    xhr = new ActiveXObject("Microsoft.XMLHTTP");
+  }
+
+  for ([key, value] of Object.entries(headers)) {
+    xhr.setRequestHeader(key, value)
+  }
+
+  xhr.timeout = timeout;
+  xhr.ontimeout = onError;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+      if (xhr.status < 400) {
+        onSuccess(xhr.responseText)
+      } else if (xhr.status >= 400) {
+        onError(xhr.status)
+      }
+    }
+  }
+  xhr.open(method, url, true);
+  xhr.send(data);
+}
+
 function getCounter() {
   let last = 0;
   return () => ++last;
@@ -22,7 +55,7 @@ class Good {
     return this.title;
   }
   render() {
-    return `<div class="goods-item"><h3>${this.title}</h3><p>${this.price}</p></div>`;
+    return `<div class="goods-item"><h3>${this.title}</h3><p>${this.price} руб.</p></div>`;
   }
 }
 
@@ -77,6 +110,7 @@ class Cart {
       }
     }
   }
+
   render() {
     let listHtml = '';
     this.list.forEach(goodStack => listHtml += goodStack.render());
@@ -90,19 +124,43 @@ class Showcase {
     this.cart = cart;
   }
 
-  fetchGoods() {
-    this.list = [
-      new Good({ id: 1, title: 'Футболка', price: 140 }),
-      new Good({ id: 2, title: 'Брюки', price: 320 }),
-      new Good({ id: 3, title: 'Галстук', price: 24 })
-    ]
+  _onSuccess(response) {
+    const data = JSON.parse(response)
+    data.forEach(product => {
+      this.list.push(
+        new Good({ id: product.id_product, title: product.product_name, price: product.price })
+      )
+    });
   }
+
+  _onSuccessCart(response) {
+    const data = JSON.parse(response)
+    data.contents.forEach(product => {
+      for (let i = 0; i < product.quantity; i++) {
+        this.addToCart(product.id_product)
+      }
+    });
+  }
+
+  _onError(err) {
+    console.log(err);
+  }
+
+  fetchGoods() {
+    send(this._onError, this._onSuccess.bind(this), `${API_URL}/catalogData.json`)
+  }
+
+  fetchCart() {
+    send(this._onError, this._onSuccessCart.bind(this), `${API_URL}/getBasket.json`)
+  }
+
   addToCart(id) {
     const idx = this.list.findIndex((good) => id == good.id)
     if (idx >= 0) {
       this.cart.add(this.list[idx])
     }
   }
+
   render() {
     let listHtml = '';
     this.list.forEach(goodItem => listHtml += goodItem.render());
@@ -114,13 +172,16 @@ const cart = new Cart();
 const showcase = new Showcase(cart);
 
 showcase.fetchGoods();
+showcase.fetchCart();
 
-showcase.addToCart(1);
-showcase.addToCart(1);
-showcase.addToCart(1);
-showcase.addToCart(3);
+setTimeout(() => {
+  // showcase.addToCart(123)
+  // showcase.addToCart(123)
+  // showcase.addToCart(123)
+  // showcase.addToCart(456)
 
-cart.remove(1);
+  // cart.remove(123)
 
-showcase.render()
-cart.render()
+  showcase.render()
+  cart.render()
+}, 1000)
