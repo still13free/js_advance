@@ -1,0 +1,10 @@
+.text {
+    display: flex;
+    flex-direction: column;
+    text-align: justify;
+    align-items: center;
+}
+
+p {
+    width: 500px;
+}
