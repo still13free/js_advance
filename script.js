@@ -148,7 +148,14 @@ class Cart {
 class Showcase {
   constructor(cart) {
     this.list = [];
+    this.filtred = [];
     this.cart = cart;
+
+    // this.view = new ShowcaseView('.goods-list')
+    this.searchInput = document.querySelector('#search-input')
+    this.searchButton = document.querySelector('#search-button')
+
+    this.searchButton.addEventListener('click', this.filter.bind(this))
   }
 
   _onSuccess(response) {
@@ -158,6 +165,7 @@ class Showcase {
         new Good({ id: product.id_product, title: product.product_name, price: product.price })
       )
     });
+    this.render(this.list)
   }
 
   _onSuccessCart(response) {
@@ -166,6 +174,7 @@ class Showcase {
       for (let i = 0; i < product.quantity; i++) {
         this.addToCart(product.id_product)
       }
+      this.cart.render()
     });
   }
 
@@ -188,10 +197,17 @@ class Showcase {
     }
   }
 
-  render() {
+  render(renderList) {
     let listHtml = '';
-    this.list.forEach(goodItem => listHtml += goodItem.render());
+    renderList.forEach(goodItem => listHtml += goodItem.render());
     document.querySelector('.goods-list').innerHTML = listHtml;
+  }
+
+  filter() {
+    const search = new RegExp(this.searchInput.value, 'i')
+    this.filtred = this.list.filter(good => search.test(good.title))
+    // this.view.render()
+    this.render(this.filtred)
   }
 }
 
@@ -199,25 +215,21 @@ const cart = new Cart();
 const showcase = new Showcase(cart);
 
 showcase.fetchGoods();
-
-setTimeout(() => {
-  showcase.fetchCart()
-}, 500);
-
-setTimeout(() => {
-  showcase.render()
-}, 1000);
+showcase.fetchCart();
 
 // немного тестов
 setTimeout(() => {
   showcase.addToCart(123)
-}, 2000);
+}, 1000);
 setTimeout(() => {
   showcase.addToCart(123)
-}, 3000);
+}, 2000);
 setTimeout(() => {
   showcase.addToCart(456)
-}, 4000);
+}, 3000);
 setTimeout(() => {
   cart.remove(456)
+}, 4000);
+setTimeout(() => {
+  showcase.addToCart(123)
 }, 5000);
