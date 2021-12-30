@@ -12,8 +12,9 @@
     align-items: center;
   }
 
-  .cart-button {
+  .header-button {
       padding: 2px 12px;
+      margin: 0 10px;
   }
 
   .goods-list {
@@ -38,4 +39,8 @@
 
   .modal-item {
       text-align: left;
+  }
+
+  .goods-search {
+      margin-right: 0;
   }
