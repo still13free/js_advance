@@ -31,25 +31,32 @@ app.get('/api/v1/cart', (req, res) => {
   })
 })
 
-app.post('/api/v1/cart', (req, res) => {
+app.post('/api/v1/cart/add', (req, res) => {
   fs.readFile(cart_path, 'utf-8', (err, data) => {
     if (!err) {
-      console.log(req.body)
+      const addGood = req.body
+      console.log(addGood)
+
       const cart = JSON.parse(data);
-      cart.push(req.body);
+      const idx = cart.contents.findIndex((stack) => stack.id_product == addGood.id_product)
+      if (idx >= 0) {
+        cart.contents[idx].quantity += 1
+      } else {
+        cart.contents.push({
+          "id_product": addGood.id_product,
+          "product_name": addGood.product_name,
+          "price": addGood.price,
+          "quantity": 1
+        })
+      }
+      console.log(`good added at index ${idx}`)
+
+      cart.amount += addGood.price
+      cart.countGoods += 1
+
       fs.writeFile(cart_path, JSON.stringify(cart), 'utf-8', (err, data) => {
         res.sendStatus(201)
       })
-    } else {
-      res.status(500).send(err)
-    }
-  })
-})
-
-app.get('/api/v1/cart/remove', (req, res) => {
-  fs.readFile(cart_path, 'utf-8', (err, data) => {
-    if (!err) {
-      res.send(data);
     } else {
       res.status(500).send(err)
     }
@@ -59,17 +66,31 @@ app.get('/api/v1/cart/remove', (req, res) => {
 app.post('/api/v1/cart/remove', (req, res) => {
   fs.readFile(cart_path, 'utf-8', (err, data) => {
     if (!err) {
-      console.log(req.body)
-      const removeId = req.body.id
+      const removeId = req.body.id_product
+      console.log(removeId)
+
       const cart = JSON.parse(data);
-      const item = cart.find(good => good.id == removeId)
-      console.log(item)
-      const index = cart.indexOf(item)
-      console.log(`remove index: ${index}`)
-      cart.splice(index, 1)
-      fs.writeFile(cart_path, JSON.stringify(cart), 'utf-8', (err, data) => {
-        res.sendStatus(201)
-      })
+      const idx = cart.contents.findIndex((stack) => stack.id_product == removeId)
+
+      if (idx >= 0) {
+        const good = cart.contents[idx]
+        cart.amount -= good.price
+        cart.countGoods -= 1
+
+        if (good.quantity > 1) {
+          cart.contents[idx].quantity -= 1
+          console.log(`good at index ${idx} decreased`)
+        } else {
+          cart.contents.splice(idx, 1)
+          console.log(`good at index ${idx} deleted`)
+        }
+
+        fs.writeFile(cart_path, JSON.stringify(cart), 'utf-8', (err, data) => {
+          res.sendStatus(201)
+        })
+      } else {
+        res.sendStatus(304)
+      }
     } else {
       res.status(500).send(err)
     }
