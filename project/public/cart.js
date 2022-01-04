@@ -4,7 +4,7 @@ Vue.component('cart',
             <div class="modal">
                 <button v-on:click="onClick">Закрыть</button>
                 <div class="cart-list">
-                    <cartCard v-for="item of list" :good="item" :action_name="'Удалить'"></cartCard>
+                    <cartCard v-for="item of list" :good="item" :action_name="'Удалить'" v-on:remove-good="$emit('remove-from-cart')"></cartCard>
                 </div>
             </div>
         `,

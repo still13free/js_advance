@@ -11,41 +11,54 @@ new Vue({
         onCartOpen() {
             this.isCartVisible = !this.isCartVisible
         },
-        addtoCart() {
+        addToCart() {
+            const id = Number(event.target.dataset.id)
+            const idx = this.showcase.findIndex((good) => good.id_product == id)
+            const product = {
+                "id_product": this.showcase[idx].id_product,
+                "product_name": this.showcase[idx].product_name,
+                "price": this.showcase[idx].price,
+                "quantity": 1
+            };
 
-            console.log(event.target)
-
-            // id
-            // product
-            // fetch(`${API_URL}/cart/add`, {
-            //     method: 'POST',
-            //     headers: {
-            //         "Content-Type": "application/json;odata=verbose",
-            //     },
-            //     body: JSON.stringify(product)
-            // })
-            //     .then((res) => {
-            //         return res.json()
-            //     })
-            //     .then((data) => {
-            //         this.cart = data
-            //     })
+            fetch(`${API_URL}/cart/add`, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json;odata=verbose",
+                },
+                body: JSON.stringify(product)
+            })
+                .then((res) => {
+                    this.cart.amount += product.price
+                    this.cart.countGoods += 1
+                    const _idx = this.cart.contents.findIndex((good) => good.id_product == id)
+                    if (_idx >= 0) {
+                        this.cart.contents[_idx].quantity += 1
+                    } else {
+                        this.cart.contents.push(product)
+                    }
+                })
         },
         removeFromCart() {
+            const id = Number(event.target.dataset.id)
 
-            console.log(event.target)
+            fetch(`${API_URL}/cart/remove`, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json;odata=verbose",
+                },
+                body: JSON.stringify({ "id_product": id, })
+            })
+                .then((res) => {
+                    const _idx = this.cart.contents.findIndex((good) => good.id_product == id)
+                    this.cart.amount -= this.cart.contents[_idx].price
+                    this.cart.countGoods -= 1
+                    this.cart.contents[_idx].quantity -= 1
 
-            // id
-            // fetch(`${API_URL}/cart/remove`, {
-            //     method: 'POST',
-            //     headers: {
-            //         "Content-Type": "application/json;odata=verbose",
-            //     },
-            //     body: JSON.stringify({ "id_product": id, })
-            // })
-            //     .then((res) => {
-            //         return res
-            //     })
+                    if (this.cart.contents[_idx].quantity <= 0) {
+                        this.cart.contents.splice(_idx, 1)
+                    }
+                })
         },
     },
     mounted() {
