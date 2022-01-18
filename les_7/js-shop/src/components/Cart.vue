@@ -29,17 +29,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss" scoped>
-.modal {
-  width: 800px;
-  min-height: 600px;
-  position: absolute;
-  top: 100px;
-  left: calc(50% - 400px);
-  border: 1px solid #ccc;
-  background-color: white;
-  border-radius: 3px;
-  padding: 20px;
-}
-</style>
