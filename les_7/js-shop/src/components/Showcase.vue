@@ -5,7 +5,7 @@
       v-bind:key="item.id_product"
       :good="item"
       :action_name="'Купить'"
-      v-on:add-good="$emit('add-to-cart')"
+      v-on:cardaction="onAdd"
     ></card>
   </div>
 </template>
@@ -18,6 +18,15 @@ export default {
   components: {
     card,
   },
-  props: ["list"],
+  methods: {
+    onAdd(product) {
+      this.$store.dispatch("addToCart", product);
+    },
+  },
+  computed: {
+    list() {
+      return this.$store.getters.getShowcase;
+    },
+  },
 };
 </script>
