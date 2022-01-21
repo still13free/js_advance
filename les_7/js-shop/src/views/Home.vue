@@ -7,7 +7,7 @@
       <button v-on:click="onCartOpen" class="cart-button" type="button">
         Корзина
       </button>
-      <p>: {{ cart.amount }} руб.</p>
+      <p>: {{ cart.amount || 0 }} руб. ({{ cart.countGoods || 0 }} шт.)</p>
     </header>
 
     <main>
