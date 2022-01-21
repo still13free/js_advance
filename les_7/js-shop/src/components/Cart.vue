@@ -7,7 +7,7 @@
         v-bind:key="item.id_product"
         :good="item"
         :action_name="'Удалить'"
-        v-on:remove-good="$emit('remove-from-cart')"
+        v-on:cardaction="onRemove"
       ></cartCard>
     </div>
   </div>
@@ -21,10 +21,17 @@ export default {
   components: {
     cartCard,
   },
-  props: ["list"],
   methods: {
     onClick() {
       this.$emit("cart-close");
+    },
+    onRemove(product) {
+      this.$store.dispatch("removeFromCart", product);
+    },
+  },
+  computed: {
+    list() {
+      return this.$store.getters.getCart.contents;
     },
   },
 };
